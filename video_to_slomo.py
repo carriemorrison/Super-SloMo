@@ -171,6 +171,14 @@ def main():
     # Interpolate frames
     frameCounter = 1
 
+    # Prepare output stream
+    outputProcess = (
+        ffmpeg
+        .input('pipe:', format='rawvideo', pix_fmt='rgb24', r=args.fps, s='{}x{}'.format(width, height))
+        .output(args.output, pix_fmt='yuv420p', r=args.fps)
+        .run_async(pipe_stdin=True)
+    )
+
     with torch.no_grad():
         for _, (frame0, frame1) in enumerate(tqdm(videoFramesloader), 0):
 
@@ -214,7 +222,11 @@ def main():
 
                 # Save intermediate frame
                 for batchIndex in range(args.batch_size):
-                    (TP(Ft_p[batchIndex].cpu().detach())).resize(videoFrames.origDim, Image.BILINEAR).save(os.path.join(outputPath, str(frameCounter + args.sf * batchIndex) + ".png"))
+
+                    # Save reference/intermediate frames
+                    outputProcess.stdin.write((TP(frame0[batchIndex].detach())).resize(videoFrames.origDim, Image.BILINEAR).tobytes())
+
+                    # (TP(Ft_p[batchIndex].cpu().detach())).resize(videoFrames.origDim, Image.BILINEAR).save(os.path.join(outputPath, str(frameCounter + args.sf * batchIndex) + ".png"))
                 frameCounter += 1
 
             # Set counter accounting for batching of frames

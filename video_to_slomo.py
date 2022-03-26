@@ -178,7 +178,7 @@ def main():
         .output(args.output, pix_fmt='yuv420p', r=args.fps)
         .run_async(pipe_stdin=True)
     )
-
+    print(outputProcess)
     with torch.no_grad():
         for _, (frame0, frame1) in enumerate(tqdm(videoFramesloader), 0):
 
